@@ -28,6 +28,20 @@ Ngày kiểm chứng: 24/10/2026 (Asia/Ho_Chi_Minh). Các SHA/run dưới đây 
 - URL staging: <https://aemi-be-21550022-staging.azurewebsites.net>.
 - URL production: <https://aemi-be-21550022-production.azurewebsites.net>.
 
+## Phát hành lần hai
+
+- [PR 4](https://github.com/21550022/aemi-be-nest/pull/4) đưa tài liệu vào staging; [run staging](https://github.com/21550022/aemi-be-nest/actions/runs/40060521944) đạt với SHA `755735d2031300ddd5ceb5fd4dce1bcc401b646f`.
+- [PR 5](https://github.com/21550022/aemi-be-nest/pull/5) đưa staging vào main; [run production](https://github.com/21550022/aemi-be-nest/actions/runs/40060715440) đạt với SHA `9634a2bcaec7210401efe3fdac48aab19ca3d550`.
+- Trước rollback, HTTP production `/version` đã xác nhận đúng SHA lần hai. Hai môi trường có SHA khác nhau vì build theo commit nhánh đích, không dùng chung artifact.
+
+## Diễn tập khôi phục phiên bản (rollback)
+
+- [Workflow rollback thực tế](https://github.com/21550022/aemi-be-nest/actions/runs/40060866674) hoàn tất thành công trên main, nguồn là CI run `40060285319`.
+- Trước rollback: production `/version` là `9634a2bcaec7210401efe3fdac48aab19ca3d550`.
+- Sau rollback: production `/version` là `8baee205301aa1a54e7d74f94569564c3964f70f`, `appEnv=production`; health/version smoke test đạt.
+- Workflow đã kiểm tra nguồn run, tải artifact còn hạn từ run khác, xác minh metadata/checksum, đăng nhập OIDC và deploy lại ZIP. Không checkout/build mã cũ để tạo artifact mới.
+- Sau diễn tập, tiếp tục phát hành tài liệu này qua PR vào staging rồi main để production chạy bản mới nhất. Xem run push main mới nhất và `/version` để xác định phiên bản đang phục vụ; SHA rollback ở trên là mốc lịch sử, không phải cam kết phiên bản hiện tại.
+
 ## Sự cố đã xử lý
 
 Run staging đầu tiên lỗi `AADSTS700213`: repo mới sử dụng immutable OIDC subject có ID owner/repository. Đã đối chiếu subject trong log, cập nhật federated credential cả hai môi trường và sửa script bootstrap đọc `sub_claim_prefix` từ API. [Run sau khi sửa](https://github.com/21550022/aemi-be-nest/actions/runs/40059862366/attempts/2) thành công.

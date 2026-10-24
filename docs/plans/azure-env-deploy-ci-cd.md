@@ -431,36 +431,39 @@ Yaak chạy trên desktop nên không cần bật CORS chỉ để kiểm thử.
 flowchart TB
     subgraph prepareGroup["A — Chuẩn bị"]
         aOne["1. Kiểm tra Student, quota và chi phí"]
-        aTwo["2. Chuẩn hóa Node.js, pnpm và cấu hình"]
-        aThree["3. Thêm health và version"]
-        aOne --> aTwo --> aThree
+        aTwo["2. Chuẩn bị Node.js, pnpm và CLI"]
+        aThree["3. Chuẩn hóa cấu hình ứng dụng"]
+        aFour["4. Thêm health và version"]
+        aOne --> aTwo --> aThree --> aFour
     end
 
     subgraph localGroup["B — Kiểm chứng local"]
-        bOne["4. Build và chạy bản biên dịch"]
-        bTwo["5. Tạo ba environment Yaak"]
-        bThree["6. Kiểm tra request và lỗi"]
-        bOne --> bTwo --> bThree
+        bOne["5. Kiểm tra mã, build và chạy local"]
+        bTwo["6. Tạo ba environment Yaak"]
+        bOne --> bTwo
     end
 
     subgraph manualGroup["C — Azure thủ công"]
-        cOne["7. Tạo và deploy staging"]
-        cTwo["8. Kiểm tra log và Yaak"]
-        cThree["9. Deploy cùng artifact lên production"]
-        cOne --> cTwo --> cThree
+        cOne["7. Tạo Web App staging"]
+        cTwo["8. Đóng gói ứng dụng"]
+        cThree["9. Deploy staging, kiểm tra log và Yaak"]
+        cFour["10. Tạo và kiểm tra production"]
+        cOne --> cTwo --> cThree --> cFour
     end
 
-    subgraph automationGroup["D — Tự động hóa"]
-        dOne["10. GitHub public và CI"]
-        dTwo["11. Merge staging → tự deploy staging"]
-        dThree["12. Merge main → tự deploy production"]
-        dFour["13. Diễn tập rollback và dọn tài nguyên"]
-        dOne --> dTwo --> dThree --> dFour
+    subgraph automationGroup["D — GitHub CI/CD"]
+        dOne["11. Repository và bảo vệ hai nhánh"]
+        dTwo["12. Workflow CI"]
+        dThree["13. OIDC và GitHub Environments"]
+        dFour["14. Merge staging → tự deploy staging"]
+        dFive["15. Merge main → tự deploy production"]
+        dSix["16. Diễn tập rollback"]
+        dOne --> dTwo --> dThree --> dFour --> dFive --> dSix
     end
 
-    aThree --> bOne
-    bThree --> cOne
-    cThree --> dOne
+    aFour --> bOne
+    bTwo --> cOne
+    cFour --> dOne
 ```
 
 Mỗi nhóm chỉ chuyển tiếp khi nhóm trước đã có kết quả quan sát được. Điều này giúp phân biệt lỗi ứng dụng, lỗi Azure và lỗi workflow.
