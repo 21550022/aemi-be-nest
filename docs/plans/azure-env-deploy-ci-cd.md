@@ -1,5 +1,7 @@
 # Kế hoạch triển khai NestJS lên Azure và thiết lập GitHub CI/CD
 
+[Hướng dẫn thực hành](../guides/azure-deployment.md) · [Bằng chứng kiểm chứng](../guides/deployment-verification.md)
+
 ## 1. Mục tiêu và kiến trúc đã chốt
 
 Triển khai theo hướng **làm thủ công để hiểu trước → tự động hóa bằng GitHub Actions**.
