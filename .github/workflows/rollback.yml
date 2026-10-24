@@ -50,6 +50,7 @@ jobs:
           EXPECTED_BRANCH: main
           EXPECTED_RUN_ID: ${{ inputs.run_id }}
       - uses: azure/login@v2
+        id: login
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -67,5 +68,5 @@ jobs:
         run: |
           printf 'Rollback production\nURL: %s\nCommit: %s\nSource run: %s\n' "$BASE_URL" "$EXPECTED_SHA" "$RUN_ID" >> "$GITHUB_STEP_SUMMARY"
       - name: Azure logout
-        if: always()
+        if: always() && steps.login.outcome == 'success'
         run: az logout
