@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: AEMI Backend deployment checks
+  version: 1.0.0
+  description: Import into Yaak, then insert baseUrl using the variable picker.
+servers:
+  - url: http://localhost:3000
+    description: local
+  - url: https://aemi-be-21550022-staging.azurewebsites.net
+    description: staging
+  - url: https://aemi-be-21550022-production.azurewebsites.net
+    description: production
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      summary: Kiểm tra ứng dụng
+      responses:
+        '200':
+          description: Ứng dụng xử lý được HTTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+  /version:
+    get:
+      tags: [Health]
+      operationId: getVersion
+      summary: Kiểm tra môi trường và commit SHA
+      responses:
+        '200':
+          description: Môi trường và định danh bản build
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appEnv:
+                    type: string
+                    enum: [local, staging, production]
+                  commitSha:
+                    type: string
+  /missing:
+    get:
+      tags: [Health]
+      operationId: checkNotFound
+      summary: Kiểm tra đường dẫn không tồn tại
+      responses:
+        '404':
+          description: Không có route tương ứng
