@@ -57,3 +57,13 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Deployment outputs and local credentials
+/.artifacts/
+/build-info.json
+/.azure/
+.env.*
+!.env.example
+
+__pycache__/
+*.pyc

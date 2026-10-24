@@ -1,0 +1,71 @@
+name: Rollback production
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful CI run ID on main, within artifact retention
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ inputs.run_id }}
+      BASE_URL: ${{ vars.AZURE_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Validate source run
+        id: source
+        run: node scripts/rollback-source.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-${{ steps.source.outputs.sha }}
+          path: .artifacts
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+      - run: node scripts/verify-artifact.mjs
+        env:
+          EXPECTED_SHA: ${{ steps.source.outputs.sha }}
+          EXPECTED_BRANCH: main
+          EXPECTED_RUN_ID: ${{ inputs.run_id }}
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: .artifacts/app.zip
+      - run: node scripts/smoke.mjs "$BASE_URL" production "$EXPECTED_SHA"
+        env:
+          EXPECTED_SHA: ${{ steps.source.outputs.sha }}
+      - name: Rollback summary
+        env:
+          EXPECTED_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          printf 'Rollback production\nURL: %s\nCommit: %s\nSource run: %s\n' "$BASE_URL" "$EXPECTED_SHA" "$RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+      - name: Azure logout
+        if: always()
+        run: az logout

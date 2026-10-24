@@ -7,19 +7,24 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "build": "nest build",
-    "deploy": "nest deploy",
+    "build": "nest build && node scripts/write-build-info.mjs",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/main.js",
     "lint": "oxlint --type-aware src/ test/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/**/*.mjs\" \".github/workflows/*.yml\"",
+    "package:azure": "node scripts/package-azure.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test:package": "node scripts/test-package.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
@@ -45,5 +50,9 @@
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.2"
-  }
+  },
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "packageManager": "pnpm@12.15.0"
 }

@@ -1,3 +1,11 @@
+## Triển khai Azure và kiểm thử API
+
+- [Hướng dẫn từng bước, Yaak và GitHub CI/CD](docs/guides/azure-deployment.md)
+- [Plan và sơ đồ kiến trúc](docs/plans/azure-env-deploy-ci-cd.md)
+- [Bằng chứng triển khai](docs/guides/deployment-verification.md)
+- Merge `staging` → tự deploy staging; merge `main` → tự deploy production, sau khi CI đạt.
+- Node.js 22, pnpm 12.15.0; bắt đầu với `pnpm install --frozen-lockfile` và `pnpm start:dev`.
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
