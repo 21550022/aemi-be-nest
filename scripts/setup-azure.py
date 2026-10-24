@@ -39,6 +39,15 @@ identity_name = f'id-aemi-be-{env}-github'
 repo = gh(f'repos/{args.repo}')
 if repo['private']:
     raise RuntimeError('Kế hoạch này yêu cầu repository public; không tự đổi visibility')
+oidc = gh(f'repos/{args.repo}/actions/oidc/customization/sub')
+if not oidc.get('use_default', False):
+    raise RuntimeError('Custom OIDC subject: inspect the configured claim template before provisioning')
+subject_prefix = oidc.get('sub_claim_prefix')
+if not subject_prefix:
+    if oidc.get('use_immutable_subject', False):
+        subject_prefix = f"repo:{repo['owner']['login']}@{repo['owner']['id']}/{repo['name']}@{repo['id']}"
+    else:
+        subject_prefix = f'repo:{args.repo}'
 account = az('account', 'show')
 subscription = account['id']
 tenant = account['tenantId']
@@ -75,7 +84,7 @@ identity = az('identity', 'create', '-g', rg, '-n', identity_name)
 az('identity', 'federated-credential', 'create', '-g', rg,
    '--identity-name', identity_name, '-n', 'github-environment',
    '--issuer', 'https://token.actions.githubusercontent.com',
-   '--subject', f'repo:{args.repo}:environment:{env}',
+   '--subject', f'{subject_prefix}:environment:{env}',
    '--audiences', 'api://AzureADTokenExchange')
 for attempt in range(6):
     try:

@@ -166,8 +166,10 @@ Script không gán quyền toàn subscription cho GitHub. Người bootstrap c�
 
 | GitHub Environment | Nhánh được deploy | Subject của federated credential |
 |---|---|---|
-| staging | `staging` | `repo:21550022/aemi-be-nest:environment:staging` |
-| production | `main` | `repo:21550022/aemi-be-nest:environment:production` |
+| staging | `staging` | `repo:21550022@124350627/aemi-be-nest@1431783342:environment:staging` |
+| production | `main` | `repo:21550022@124350627/aemi-be-nest@1431783342:environment:production` |
+
+Repo mới dùng subject chứa ID bất biến (immutable subject). Script đọc `sub_claim_prefix` từ API GitHub thay vì suy đoán theo tên repo. Với repo cũ, subject có thể vẫn là `repo:OWNER/REPO:environment:ENV`. Khi đăng nhập lỗi `AADSTS700213`, đối chiếu chính xác subject trong log `azure/login`, issuer và audience với federated credential; không tắt OIDC hoặc thay bằng publish profile. [Thay đổi subject của GitHub](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/).
 
 Mỗi Environment có variables: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_WEBAPP_NAME`, `AZURE_BASE_URL`. Đây là định danh/cấu hình, không phải mật khẩu. Không bật required reviewers vì yêu cầu là tự deploy sau merge.
 
