@@ -1,4 +1,3 @@
-
 # Kế hoạch triển khai NestJS lên Azure và thiết lập GitHub CI/CD
 
 ## 1. Mục tiêu và kiến trúc đã chốt
@@ -492,4 +491,3 @@ Khi thực hiện, tạo một hướng dẫn Markdown tiếng Việt, thuật n
 - Cách dọn hai Resource Group sau bài học; giải thích rõ tác động trước khi chạy lệnh xóa.
 
 **Giả định:** đây là bài thực hành trên Student credit, hai Web App F1 không chứa dữ liệu thật. Nếu subscription không cho tạo đủ tài nguyên F1, dừng tại bước kiểm tra quota để điều chỉnh kế hoạch, không tự chuyển sang gói trả phí.
-
