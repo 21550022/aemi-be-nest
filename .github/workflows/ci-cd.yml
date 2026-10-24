@@ -1,0 +1,93 @@
+name: CI and Azure deployment
+
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Quality checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:scripts
+      - run: pnpm test:e2e
+      - run: pnpm build
+        env:
+          BUILD_SHA: ${{ github.sha }}
+      - name: Package on trusted branches only
+        if: github.event_name == 'push'
+        run: pnpm package:azure && pnpm test:package
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: app-${{ github.sha }}
+          path: |
+            .artifacts/app.zip
+            .artifacts/app.zip.sha256
+            .artifacts/metadata.json
+          retention-days: 30
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    concurrency:
+      group: deploy-${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      APP_ENV: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      BASE_URL: ${{ vars.AZURE_BASE_URL }}
+      EXPECTED_SHA: ${{ github.sha }}
+      EXPECTED_BRANCH: ${{ github.ref_name }}
+      EXPECTED_RUN_ID: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-${{ github.sha }}
+          path: .artifacts
+      - run: node scripts/verify-artifact.mjs
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: .artifacts/app.zip
+      - run: node scripts/smoke.mjs "$BASE_URL" "$APP_ENV" "$EXPECTED_SHA"
+      - name: Deployment summary
+        run: |
+          printf 'Environment: %s\nURL: %s\nCommit: %s\nRun: %s\n' "$APP_ENV" "$BASE_URL" "$EXPECTED_SHA" "$EXPECTED_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+      - name: Azure logout
+        if: always()
+        run: az logout

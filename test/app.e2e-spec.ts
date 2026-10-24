@@ -23,6 +23,28 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('/health (GET)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/health')
+      .expect(200);
+    expect(response.body).toEqual({ status: 'ok' });
+    expect(response.headers['cache-control']).toBe('no-store');
+  });
+
+  it('/version (GET) exposes only environment and build identity', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/version')
+      .expect(200);
+    expect(response.body).toEqual({
+      appEnv: 'local',
+      commitSha: expect.stringMatching(/^(local|[a-f0-9]{40})$/),
+    });
+  });
+
+  it('returns 404 for unknown routes', async () => {
+    await request(app.getHttpServer()).get('/missing').expect(404);
+  });
+
   afterEach(async () => {
     await app.close();
   });
