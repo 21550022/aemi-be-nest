@@ -75,3 +75,58 @@ test('smoke rejects a healthy app running the wrong environment or SHA', async (
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('rollback source accepts only successful main push runs with retained artifacts', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rollback-source-'));
+  const sha = 'a'.repeat(40);
+  const source = resolve('scripts/rollback-source.mjs');
+  const run = {
+    path: '.github/workflows/ci-cd.yml',
+    event: 'push',
+    head_branch: 'main',
+    conclusion: 'success',
+    repository: { full_name: 'owner/repo' },
+    head_repository: { full_name: 'owner/repo' },
+    head_sha: sha,
+  };
+  // Giả lập API GitHub; không gọi network hay dùng token trong kiểm thử.
+  writeFileSync(
+    join(cwd, 'gh'),
+    `#!${process.execPath}\nconst artifacts = process.argv[3].includes('/artifacts?'); console.log(artifacts ? process.env.MOCK_ARTIFACTS : process.env.MOCK_RUN);\n`,
+    { mode: 0o755 },
+  );
+  const invoke = (
+    overrides = {},
+    artifacts = { artifacts: [{ name: `app-${sha}`, expired: false }] },
+  ) =>
+    spawnSync(process.execPath, [source], {
+      env: {
+        ...process.env,
+        PATH: `${cwd}:${process.env.PATH}`,
+        GH_REPO: 'owner/repo',
+        RUN_ID: '123',
+        GITHUB_OUTPUT: join(cwd, 'output'),
+        MOCK_RUN: JSON.stringify({ ...run, ...overrides }),
+        MOCK_ARTIFACTS: JSON.stringify(artifacts),
+      },
+    });
+  try {
+    assert.equal(invoke().status, 0);
+    for (const overrides of [
+      { event: 'pull_request' },
+      { head_branch: 'staging' },
+      { conclusion: 'failure' },
+      { path: '.github/workflows/rollback.yml' },
+      { repository: { full_name: 'other/repo' } },
+      { head_repository: { full_name: 'fork/repo' } },
+    ])
+      assert.notEqual(invoke(overrides).status, 0);
+    assert.notEqual(invoke({}, { artifacts: [] }).status, 0);
+    assert.notEqual(
+      invoke({}, { artifacts: [{ name: `app-${sha}`, expired: true }] }).status,
+      0,
+    );
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});

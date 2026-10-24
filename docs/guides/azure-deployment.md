@@ -215,6 +215,12 @@ Trong **Repository → Settings → Branches**, thêm protection cho `main` và 
 - Require status checks: `Quality checks`, và nhánh phải cập nhật trước merge.
 - Áp dụng quy tắc cả cho admin; chặn force push và xóa nhánh.
 
+Có thể áp dụng cùng cấu hình bằng script:
+
+```bash
+python3 scripts/protect-branches.py --repo 21550022/aemi-be-nest
+```
+
 Không sửa workflow trên nhánh production để bỏ các kiểm tra. Khi hotfix trực tiếp qua PR vào main, đồng bộ main về staging sau đó bằng PR để tránh mất bản sửa.
 
 ### Bước 12: Hiểu workflow
