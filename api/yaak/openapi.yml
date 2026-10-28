@@ -11,6 +11,19 @@ servers:
   - url: https://aemi-be-21550022-production.azurewebsites.net
     description: production
 paths:
+  /user:
+    get:
+      tags: [User]
+      operationId: getUser
+      summary: Lấy lời chào dành cho user
+      responses:
+        '200':
+          description: Lời chào user
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: hello user
   /health:
     get:
       tags: [Health]

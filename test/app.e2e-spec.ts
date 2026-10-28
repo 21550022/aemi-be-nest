@@ -31,6 +31,13 @@ describe('AppController (e2e)', () => {
     expect(response.headers['cache-control']).toBe('no-store');
   });
 
+  it('/user (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/user')
+      .expect(200)
+      .expect('hello user');
+  });
+
   it('/version (GET) exposes only environment and build identity', async () => {
     const response = await request(app.getHttpServer())
       .get('/version')
