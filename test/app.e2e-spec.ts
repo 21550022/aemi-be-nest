@@ -23,6 +23,14 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('/agent-demo (GET)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/agent-demo')
+      .expect(200)
+      .expect('Content-Type', /json/);
+    expect(response.body).toEqual({ message: 'agent demo' });
+  });
+
   it('/health (GET)', async () => {
     const response = await request(app.getHttpServer())
       .get('/health')
